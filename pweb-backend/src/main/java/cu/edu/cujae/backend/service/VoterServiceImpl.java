@@ -89,7 +89,7 @@ public class VoterServiceImpl implements VoterService {
 
        try (Connection connection = jdbcTemplate.getDataSource().getConnection()){
            PreparedStatement pstmt = jdbcTemplate.getDataSource().getConnection().prepareStatement(
-                   "SELECT * FROM voters where id_voter = ?");
+                   "SELECT * FROM voters where voters.id_voter = ?");
 
            pstmt.setInt(1, voterId);
 
@@ -98,6 +98,7 @@ public class VoterServiceImpl implements VoterService {
            while (resultSet.next()) {
                voter = createNewDto(resultSet);
            }
+           System.out.println("Llego al controller y el votante es " + voter.getName());
        }
 
        return voter;

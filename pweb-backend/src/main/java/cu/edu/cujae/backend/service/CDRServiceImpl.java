@@ -1,6 +1,5 @@
 package cu.edu.cujae.backend.service;
 
-import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -9,14 +8,11 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
-import org.apache.tomcat.websocket.server.UriTemplate;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
 import cu.edu.cujae.backend.core.dto.CDRDto;
 import cu.edu.cujae.backend.core.service.CDRService;
@@ -83,29 +79,29 @@ public class CDRServiceImpl implements CDRService {
    }
 
    @Override
-   public void createCDR(CDRDto cdr) throws SQLException { // Originalmente aqui no se creaba el ID
+   public void createCDR(@NotNull CDRDto cdr) throws SQLException { // Originalmente aqui no se creaba el ID
       try(Connection connection = jdbcTemplate.getDataSource().getConnection()){
          String function = "{call create_cdr(?,?,?)}";
 
          CallableStatement statement = jdbcTemplate.getDataSource().getConnection().prepareCall(function);
          //statement.setInt(1, cdr.getCodCDR());
-         statement.setString(1, cdr.getNamCDR());
-         statement.setInt(2, cdr.getId_college());
-         statement.setInt(3, cdr.getId_presidentCDR());
+         statement.setString(1, cdr.getName_cdr());
+         statement.setInt(2, cdr.getCollege());
+         statement.setInt(3, cdr.getId_president());
          statement.execute();
       }
    }
 
    @Override
-   public void updateCDR(CDRDto cdr) throws SQLException { // Originalmente este metodo actualizaba ademas de los valores del Dto su ID tambien
+   public void updateCDR(@NotNull CDRDto cdr) throws SQLException { // Originalmente este metodo actualizaba ademas de los valores del Dto su ID tambien
       try(Connection connection = jdbcTemplate.getDataSource().getConnection()){
          String function = "{call update_cdr(?,?,?,?)}";
 
          CallableStatement statement = jdbcTemplate.getDataSource().getConnection().prepareCall(function);
-         statement.setString(1, cdr.getNamCDR());
-         statement.setInt(2, cdr.getId_presidentCDR());
-         statement.setInt(3, cdr.getId_college());
-         statement.setInt(4, cdr.getCodCDR());
+         statement.setString(1, cdr.getName_cdr());
+         statement.setInt(2, cdr.getId_president());
+         statement.setInt(3, cdr.getCollege());
+         statement.setInt(4, cdr.getId_cdr());
          statement.execute();
       }
    }
@@ -144,6 +140,6 @@ public class CDRServiceImpl implements CDRService {
          }
       }
 
-      return cdr.getCodCDR();
+      return cdr.getId_cdr();
    }
 }

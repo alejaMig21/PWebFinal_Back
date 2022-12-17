@@ -38,6 +38,8 @@ public class CDRController {
 	
 	@PostMapping("/")
     public ResponseEntity<String> createCDR(@RequestBody CDRDto cdr) throws SQLException {
+        System.out.println("Al controller del Backend llego el CDR " + cdr.getName_cdr() +
+                " cuyo presidente es " + cdr.getId_president());
 		cdrService.createCDR(cdr);
         return ResponseEntity.ok("CDR Created");
     }
