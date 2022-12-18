@@ -5,25 +5,25 @@ public class ElectoralProcessDto {
 	private int id_electoral_process;
 	private int municipality;
 	private int roundnum;
-	private int id_nominated;
+	private int total_nominateds;
 
-	public int getId_nominated() {
-		return id_nominated;
+	public int getTotal_nominateds() {
+		return total_nominateds;
 	}
 
-	public void setId_nominated(int id_nominated) {
-		this.id_nominated = id_nominated;
+	public void setTotal_nominateds(int total_nominateds) {
+		this.total_nominateds = total_nominateds;
 	}
 
 	public ElectoralProcessDto() {
 		super();
 	}
-	public ElectoralProcessDto(int id_electoral_process, int municipality, int roundNum, int id_nominated) {
+	public ElectoralProcessDto(int id_electoral_process, int municipality, int roundNum, int total_nominateds) {
 		super();
 		this.roundnum = roundNum;
 		this.id_electoral_process = id_electoral_process;
 		this.municipality = municipality;
-		this.id_nominated = id_nominated;
+		this.total_nominateds = total_nominateds;
 	}
 	public int getId_electoral_process() {
 		return id_electoral_process;

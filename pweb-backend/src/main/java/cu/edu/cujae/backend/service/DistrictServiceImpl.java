@@ -109,6 +109,7 @@ public class DistrictServiceImpl implements DistrictService {
 
    @Override
    public void deleteDistrict(int districtId) throws SQLException {
+      System.out.println("El Distrito/Circunscripcion que llego fue " + districtId);
       try (Connection connection = jdbcTemplate.getDataSource().getConnection()){
          String function = "{call delete_district(?)}";
 

@@ -27,9 +27,12 @@ public class ElectoralProcessServiceImpl implements ElectoralProcessService {
       int id_electoral_process = resultSet.getInt(1);
       int municipality = resultSet.getInt(2);
       int roundnum = resultSet.getInt(3);
-      int id_nominated = resultSet.getInt(3);
+      int id_nominated = resultSet.getInt(4);
 
-      return new ElectoralProcessDto(id_electoral_process, roundnum, municipality, id_nominated);
+      System.out.println("El id es " + id_electoral_process + ", el municipality es " + municipality +
+              ", el No.Vuelta es " + roundnum + " y el id_nominated es " + id_nominated);
+
+      return new ElectoralProcessDto(id_electoral_process, municipality, roundnum, id_nominated);
    }
 
    @Override
@@ -79,12 +82,12 @@ public class ElectoralProcessServiceImpl implements ElectoralProcessService {
    @Override
    public void createElectoralProcess(@NotNull ElectoralProcessDto electoralProcess) throws SQLException { // Originalmente aqui no se creaba el ID
       try (Connection connection = jdbcTemplate.getDataSource().getConnection()){
-         String function = "{call create_electoral_process(?,?)}";
+         String function = "{call create_electoral_process(?,?,?)}";
 
          CallableStatement statement = jdbcTemplate.getDataSource().getConnection().prepareCall(function);
          statement.setInt(1, electoralProcess.getMunicipality());
          statement.setInt(2, electoralProcess.getRoundnum());
-         statement.setInt(3, electoralProcess.getId_nominated());
+         statement.setInt(3, electoralProcess.getTotal_nominateds());
          statement.execute();
       }
    }
@@ -98,7 +101,7 @@ public class ElectoralProcessServiceImpl implements ElectoralProcessService {
          statement.setInt(1, electoralProcess.getId_electoral_process());
          statement.setInt(2, electoralProcess.getMunicipality());
          statement.setInt(3, electoralProcess.getRoundnum());
-         statement.setInt(4, electoralProcess.getId_nominated());
+         statement.setInt(4, electoralProcess.getTotal_nominateds());
          statement.execute();
       }
    }

@@ -31,8 +31,9 @@ public class MunicipalityServiceImpl implements MunicipalityService {
    public MunicipalityDto createNewDto(ResultSet resultSet) throws SQLException {
       int codMun = resultSet.getInt(1);
       String namMun = resultSet.getString(2);
+      int id_electoral_process = resultSet.getInt(3);
 
-      return new MunicipalityDto(codMun, namMun);
+      return new MunicipalityDto(codMun, namMun, id_electoral_process);
    }
 
    @Override
@@ -83,25 +84,27 @@ public class MunicipalityServiceImpl implements MunicipalityService {
    public void createMunicipality(@NotNull MunicipalityDto municipality) throws SQLException { // Originalmente aqui no se creaba
                                                                                       // el ID
       try (Connection connection = jdbcTemplate.getDataSource().getConnection()){
-         String function = "{call create_municipality(?)}";
+         String function = "{call create_municipality(?,?)}";
 
          CallableStatement statement = jdbcTemplate.getDataSource().getConnection().prepareCall(function);
          // statement.setInt(1, municipality.getCodMun());
          statement.setString(1, municipality.getNameMunicipality());
+         statement.setInt(2, municipality.getId_electoral_process());
          statement.execute();
       }
    }
 
    @Override
-   public void updateMunicipality(MunicipalityDto municipality) throws SQLException { // Originalmente este metodo
+   public void updateMunicipality(@NotNull MunicipalityDto municipality) throws SQLException { // Originalmente este metodo
                                                                                       // actualizaba ademas de los
                                                                                       // valores del Dto su ID tambien
       try (Connection connection = jdbcTemplate.getDataSource().getConnection()){
-         String function = "{call update_municipality(?,?)}";
+         String function = "{call update_municipality(?,?,?)}";
 
          CallableStatement statement = jdbcTemplate.getDataSource().getConnection().prepareCall(function);
          statement.setInt(1, municipality.getCodMun());
          statement.setString(2, municipality.getNameMunicipality());
+         statement.setInt(3, municipality.getId_electoral_process());
          statement.execute();
       }
    }
