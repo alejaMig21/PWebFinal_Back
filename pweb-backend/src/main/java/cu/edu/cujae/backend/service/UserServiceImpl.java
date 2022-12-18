@@ -1,148 +1,141 @@
 package cu.edu.cujae.backend.service;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import javax.xml.bind.DatatypeConverter;
-
+import cu.edu.cujae.backend.core.dto.UserDto;
+import cu.edu.cujae.backend.core.dto.VoterDto;
+import cu.edu.cujae.backend.core.service.UserService;
+import cu.edu.cujae.backend.core.service.VoterService;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import cu.edu.cujae.backend.core.dto.UserDto;
-import cu.edu.cujae.backend.core.service.RoleService;
-import cu.edu.cujae.backend.core.service.UserService;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
-public class UserServiceImpl implements UserService{
-	
-	@Autowired
-    private JdbcTemplate jdbcTemplate;
-	
-	@Autowired
-	private RoleService roleService;
+public class UserServiceImpl implements UserService {
 
-	@Override
-	public void createUser(UserDto user) throws SQLException {
-		
-		try (Connection conn = jdbcTemplate.getDataSource().getConnection()) {
-			CallableStatement CS = conn.prepareCall(
-					"{call create_user(?, ?, ?, ?, ?, ?, ?)}");
-			
-			CS.setString(1, UUID.randomUUID().toString().replaceAll("-", "").substring(0, 9));
-			CS.setString(2, user.getUsername());
-			CS.setString(3, user.getFullName());
-			CS.setString(4, getMd5Hash(user.getPassword()));
-			CS.setString(5, user.getEmail());
-			CS.setString(6, user.getIdentification());
-			
-			//roles separados por coma, ej: "1, 2, 4"
-			String roles = user.getRoles().stream().map(r -> r.getId().toString()).collect(Collectors.joining(","));
-			CS.setString(7, roles);
-			CS.executeUpdate();	
-		} 
-		
-		
-	}
+   @Autowired
+   private JdbcTemplate jdbcTemplate;
 
-	@Override
-	public List<UserDto> listUsers() throws SQLException {
-		List<UserDto> userList = new ArrayList<UserDto>();
-		try (Connection conn = jdbcTemplate.getDataSource().getConnection()) {
-			ResultSet rs = conn.createStatement().executeQuery(
-					"SELECT * FROM users");
-			
-			while(rs.next()){
-				userList.add(new UserDto(rs.getString("id_user")
-						,rs.getString("username")
-						,rs.getString("full_name")
-						,rs.getString("password")
-						,rs.getString("email")
-						,rs.getString("identification")
-						,roleService.getRolesByUserId(rs.getString("id"))));
-			}
-		} 
-		return userList;
-	}
-	
-	@Override
-	public void updateUser(UserDto user) throws SQLException {
-		try (Connection conn = jdbcTemplate.getDataSource().getConnection()) {
-			
-			PreparedStatement pstmt = conn.prepareStatement(
-				      "update users set username = ?, full_name = ?, email = ?, identification = ? where id = ?");
-	
-			pstmt.setString(1, user.getUsername());
-			pstmt.setString(2, user.getFullName());
-			pstmt.setString(3, user.getEmail());
-			pstmt.setString(4, user.getIdentification());
-			pstmt.setString(5, user.getId());
-	
-			pstmt.executeUpdate();
-		}
-	}
+   public UserDto createNewDto(@NotNull ResultSet resultSet) throws SQLException {
+      int id_user = resultSet.getInt(1);
+      String user_name = resultSet.getString(2);
+      String user_password = resultSet.getString(3);
+      String full_name = resultSet.getString(4);
+      String email = resultSet.getString(5);
+      int roles = resultSet.getInt(6);
 
-	@Override
-	public UserDto getUserById(String userId) throws SQLException {
-		
-		UserDto user = null; 
-		try (Connection conn = jdbcTemplate.getDataSource().getConnection()) {
-		
-			PreparedStatement pstmt = conn.prepareStatement(
-				      "SELECT * FROM users where id = ?");
-	
-			pstmt.setString(1, userId);
-	
-			ResultSet rs = pstmt.executeQuery();
-			
-			while(rs.next()){
-				user = new UserDto(rs.getString("id")
-						,rs.getString("username")
-						,rs.getString("full_name")
-						,rs.getString("password")
-						,rs.getString("email")
-						,rs.getString("identification")
-						,roleService.getRolesByUserId(rs.getString("id")));
-			}
-		}
-		
-		return user;
-	}
+      return new UserDto(id_user, user_name, user_password, full_name, email, roles);
+   }
 
-	@Override
-	public void deleteUser(String userId) throws SQLException {
-		try (Connection conn = jdbcTemplate.getDataSource().getConnection()) {
-			CallableStatement CS = conn.prepareCall(
-					"{call delete_user(?)}");
-			
-			CS.setString(1, userId);
-			CS.executeUpdate();	
-		}
-	}
-	
-	private String getMd5Hash(String password) {
-		MessageDigest md;
-		String md5Hash = "";
-		try {
-			md = MessageDigest.getInstance("MD5");
-			md.update(password.getBytes());
-		    byte[] digest = md.digest();
-		    md5Hash = DatatypeConverter
-		      .printHexBinary(digest).toUpperCase();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	    return md5Hash;
-	}
+   @Override
+   public List<UserDto> listUsers() throws SQLException { // Aparentemente esta funcion ya esta
+       List<UserDto> list = new ArrayList<>();
 
+       try (Connection connection = jdbcTemplate.getDataSource().getConnection()){
+           String function = "{?= call read_list_users()}";
+
+           //Connection connection = jdbcTemplate.getDataSource().getConnection();
+           connection.setAutoCommit(false);
+           CallableStatement statement = connection.prepareCall(function);
+           statement.registerOutParameter(1, Types.OTHER);
+           statement.execute();
+
+           ResultSet resultSet = (ResultSet) statement.getObject(1);
+
+           while (resultSet.next()) {
+               UserDto dto = createNewDto(resultSet);
+               list.add(dto);
+           }
+       }
+
+       return list;
+   }
+
+   @Override
+   public UserDto getUserById(int voterId) throws SQLException {
+       UserDto voter = null;
+
+       try (Connection connection = jdbcTemplate.getDataSource().getConnection()){
+           PreparedStatement pstmt = jdbcTemplate.getDataSource().getConnection().prepareStatement(
+                   "SELECT * FROM users where users.id_user = ?");
+
+           pstmt.setInt(1, voterId);
+
+           ResultSet resultSet = pstmt.executeQuery();
+
+           while (resultSet.next()) {
+               voter = createNewDto(resultSet);
+           }
+       }
+
+       return voter;
+   }
+
+   @Override
+   public void createUser(@NotNull UserDto user) throws SQLException {
+       try (Connection connection = jdbcTemplate.getDataSource().getConnection()){
+           String function = "{call create_user(?,?,?,?,?)}";
+
+           CallableStatement statement = jdbcTemplate.getDataSource().getConnection().prepareCall(function);
+           statement.setString(1, user.getUser_name());
+           statement.setString(2, user.getUser_password());
+           statement.setString(3, user.getFull_name());
+           statement.setString(4, user.getEmail());
+           statement.setInt(5, user.getRoles());
+           statement.execute();
+       }
+   }
+
+  @Override
+  public void updateUser(@NotNull UserDto user) throws SQLException {
+      try (Connection connection = jdbcTemplate.getDataSource().getConnection()){
+          String function = "{call update_user(?,?,?,?,?,?)}";
+
+          CallableStatement statement = jdbcTemplate.getDataSource().getConnection().prepareCall(function);
+          statement.setInt(1, user.getId_user());
+          statement.setString(2, user.getUser_name());
+          statement.setString(3, user.getUser_password());
+          statement.setString(4, user.getFull_name());
+          statement.setString(5, user.getEmail());
+          statement.setInt(6, user.getRoles());
+          statement.execute();
+      }
+  }
+
+   @Override
+   public void deleteUser(int userId) throws SQLException {
+       try (Connection connection = jdbcTemplate.getDataSource().getConnection()){
+           String function = "{call delete_user(?)}";
+
+           CallableStatement statement = jdbcTemplate.getDataSource().getConnection().prepareCall(function);
+           statement.setInt(1, userId);
+           statement.execute();
+       }
+   }
+
+   @Override
+   public int getIdByName(String userName) throws SQLException {
+      UserDto voter = null;
+
+      try (Connection connection = jdbcTemplate.getDataSource().getConnection()) {
+            PreparedStatement pstmt = connection.prepareStatement(
+                    "SELECT * FROM users where user_name = ?");
+
+            pstmt.setString(1, userName);
+
+            ResultSet resultSet = pstmt.executeQuery();
+
+            while (resultSet.next()) {
+                int id_user = resultSet.getInt(1);
+
+                voter = new UserDto();
+                voter.setId_user(id_user);
+            }
+      }
+
+      return voter.getId_user();
+   }
 }
